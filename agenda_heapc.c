@@ -27,131 +27,170 @@ void *pBuffer;
 
 int *estaRodando;
 
-void * insert(char* name, int* age, long* number, int* size, void * stackHead);
-void * newNode(char* name, int* age, long* number, int* size);
-int* getLexographicallyOrder(char* str1, char* str2);
+void * insert(char* name, int* age, long* number, void * stackHead, int*stackSize);
+void * newNode(char* name, int* age, long* number);
+void * reset(void* head);
+void   list(void* stackHead, int* stackSize);
+int*   getLexographicallyOrder(char* str1, char* str2);
+void** getNext(void* element);
+void** getPrev(void* element);
+long*  getNumber(void* element);
+int*   getAge(void* element);
+char*  getName(void* element);
 int* size;
+
 void menu();
 
 int main(int argc, char *argv[])
 {
     estaRodando = (int *)malloc(sizeof(int));
-    pBuffer = (void *)calloc(1, (sizeof(char) * 11) + sizeof(long) + (sizeof(int) * 2) + (sizeof(void**) * 2));
-    size = pBuffer;
-    *size = *(int*)pBuffer;
+    pBuffer = reset(pBuffer);
+    size = (int*)pBuffer;
+    pBuffer += sizeof(int);
     *estaRodando = 0;
     
     while (*estaRodando == 0)
         menu();
     
-    free(pBuffer);
+    free(size);
     free(estaRodando);
     return 0;
 }
-void * newNode(char* name, int* age, long* number, int* size){
-    void * node = (void *)malloc((sizeof(int)) + (sizeof(char) * 11) + (sizeof(int)) + (sizeof(long)) + (sizeof(void**) * 2));
-    int * pAge = (int *)(node + (sizeof(int)) + (sizeof(char) * 11));
-    long * pNumber =  (long *)(node + (sizeof(int)) + (sizeof(char) * 11) + (sizeof(int)));
-    char * pName = (char *)(node + (sizeof(int)));
-    int * pSize= (int *)node;
-    int * pCurrentSize = (int*)node;
-    void ** pPrev = (void **)(node + ((sizeof(int)) + (sizeof(char) * 11) + (sizeof(int)) + (sizeof(long))));
-    void ** pNext = (void **)(node + ((sizeof(int)) + (sizeof(char) * 11) + (sizeof(int)) + (sizeof(long)) + (sizeof(void*))));
-    memcpy(pName, name, strlen(name));
+void * reset(void* head){
+    head = malloc(sizeof(int) * 2 + sizeof(char) * 11 + sizeof(long) + sizeof(void**) * 2);
+    void * start = head;
+    *(int*)head = 0;
+    head += sizeof(int) * 2 + sizeof(long) + sizeof(char) * 11;
+    *(void**)head = NULL;
+    head += sizeof(void**);
+    *(void**)head = NULL;
+    return start;
+}
+
+void * newNode(char* name, int* age, long* number){
+    void * node = (void *)malloc(sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**) * 2);
+
+    char * pName = (char *)node;
+    int * pAge = (int *)(node + sizeof(char) * 11);
+    long * pNumber =  (long *)(node + sizeof(char) * 11 + sizeof(int));
+    void ** pPrev = (void **)(node + sizeof(char) * 11 + sizeof(int) + sizeof(long));
+    void ** pNext = (void **)(node + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
     
+    memcpy(pName, name, strlen(name));
     *pAge = *age;
     *pNumber = *number;
-    *pSize = *size;
     *pPrev = NULL;
     *pNext = NULL;
 
 	return node;
 }
-void * insert(char* name, int* age, long* number, int* size, void * stackHead)
-{
-    void* head = stackHead + sizeof(int);
-    if(*size == 0){       
-        stackHead += sizeof(int);
-        memcpy((char*)stackHead, name, strlen(name));
-        stackHead += sizeof(char) * 11;
-        *(int*)stackHead = *age;
-        stackHead += sizeof(int);
-        *(int*)stackHead = *number;
-        stackHead += sizeof(int);
-        *(void**)stackHead = NULL;
-        stackHead += sizeof(void**);
-        *(void**)stackHead = NULL;
-        stackHead = head - sizeof(int);
-        (*size)++;
-        return stackHead;
-    }
-    void *node = newNode(name, age, number, size);
-    void **pPrev = node + sizeof(char) * 11 + sizeof(int) + sizeof(long);
-    void **pNext = node + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void **);
-
-    void * prev = NULL;
-    void * current = NULL;
-    void * next = NULL;
-    int * checkValue = NULL;
-    
-    for (int i = 0; i < *size; i++)
-    {
-        checkValue = getLexographicallyOrder(name, (char*)head);
-        if( *checkValue < 0 ){
-            
-            if(i != 0){
-                prev = head;
-                prev -= sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**) * 2;
-            }
-            else{
-                head = stackHead;
-                prev = head;
-            }
-            current = head;
-            next = head;
-            if(*size != 1 && i+1 < *size)
-                next += sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**) * 2;
-            if(i != 0){
-                *(void**)pPrev = (void*)prev;
-                prev += sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**);
-            }
-            current += sizeof(char) * 11 + sizeof(int) + sizeof(long);
-            *(void**)current = (void*)node;
-            current += sizeof(void**);
-            if(*size != 1 && i+1 < *size){
-                *(void**)pNext = (void*)current;
-                *(void**)prev = (void*)node;
-                *(void**)current = (void*)next;
-            }
-            next += sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**);
-            *(void**)next = (void*)head;
-            if(i == 0){
-                stackHead = node;
-            }
-            break;
-        }
-        head += sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**);
-        head = *(void**)head;
-    }
-
-    (*size)++;
-    free(checkValue);
-    return stackHead;
+void** getNext(void* element){
+    void** next = getPrev(element);
+    next += sizeof(void**);
+    return (void**)next;
+}
+void** getPrev(void* element){
+    long* prev = getNumber(element);
+    prev += sizeof(long);
+    return (void**)prev;
+}
+long* getNumber(void* element){
+    int* number = getAge(element);
+    number += sizeof(int);
+    return (long*)number;
+}
+int* getAge(void* element){
+    char* age = getName(element);
+    age += sizeof(char) * 11;
+    return (int*)age;
+}
+char* getName(void* element){
+    return (char*)element;
 }
 int* getLexographicallyOrder(char* str1, char* str2){
     while (*str1 && *str2 && *str1 == *str2) {
         str1++;
         str2++;
     }
-    int *result = malloc(sizeof(int));
-    *result = (*str1 - *str2);
+    int *res = malloc(sizeof(int));
+    *res = (*str1 - *str2);
 
-    if (*result < 0)
-        *result = -1;
-    else if (*result > 0)
-        *result = 1;
+    if (*res < 0)
+        *res = -1;
+    else if (*res > 0)
+        *res = 1;
 
-    return result;
+    return res;
+}
+void * insert(char* name, int* age, long* number, void * stackHead, int* stackSize)
+{
+    void* head = stackHead;
+    void* firstElement = stackHead;
+    void* currentElement = stackHead;
+    if(*stackSize == 0){
+        memcpy(getName(firstElement), name, sizeof(name));
+        int* elementAge = getAge(stackHead);
+        *elementAge = *age;
+        long* elementNumber = getNumber(stackHead);
+        *elementNumber = *number;
+        (*stackSize)++;
+        return head;
+    }
+    void* nodo = newNode(name, age, number);
+    int* order = NULL;
+    void** next = (void**)getNext(head);
+    void** prev = (void**)getPrev(head);
+    void** nodoPrev = (void**)getNext(nodo);
+    void** nodoNext = (void**)getNext(nodo);
+    void** prevNext = NULL;
+    for (int i = 0; i < *stackSize; i++)
+    {
+        order = getLexographicallyOrder(name, getName(currentElement));
+        if(*order < 0){
+            next = (void**)getNext(currentElement);
+            prev = (void**)getPrev(currentElement);
+            if(i != 0){
+                if(*prev != NULL){
+                    *nodoPrev = *prev;
+                    prevNext = (void**)getNext(*prev);
+                    *prevNext = nodo;
+                    *prev = nodo;
+                }
+                if(*next != NULL)
+                    *next = (void**)getNext(*(void**)next);
+            }else{
+                *(void**)prev = (void*)nodo;
+                head = nodo;
+            }
+            *nodoNext = currentElement;
+            break;
+        }else if(i+1 == *stackSize && *stackSize == 1){
+            *nodoPrev = *prev;
+            *next = nodo;
+            *nodoNext = NULL;
+            break;
+        }else if(i+1 == *stackSize){
+            prev = (void**)getPrev(currentElement);
+            prevNext = (void**)getNext(prev);
+            *prev = nodo;
+            *nodoPrev = *prev;
+            *nodoNext = currentElement;
+            *prevNext = nodo;
+        }
+        currentElement = *(void**)getNext(currentElement);
+    }
+    (*stackSize)++;
+    free(order);
+    return head;
+}
+void list(void* stackHead, int* howManyToList){
+    void* currentElement = stackHead;
+    for (int i = 0; i < *howManyToList; i++){
+        printf("Name: %s\n", getName(currentElement));
+        printf("Age: %d\n", *(int*)getAge(currentElement));
+        printf("Number: %ld\n", *(long*)getNumber(currentElement));
+        currentElement = *(void**)getNext(currentElement);
+    }
 }
 void menu()
 {
@@ -159,7 +198,7 @@ void menu()
     printf("Escolha uma das opcoes abaixo: \n");
     printf("1) Adicionar contato:  \n");
     printf("2) Remover contato: \n");
-    printf("3) Listar contato: \n");
+    printf("3) Listar contatos: \n");
     printf("4) Procurar por nome: \n");
     printf("5) Procurar por idade: \n");
     printf("6) Procurar por telefone: \n");
@@ -180,13 +219,16 @@ void menu()
         scanf("%d", age);
         printf("Digite o telefone: ");
         scanf("%ld", number);
-        pBuffer = insert(name, age, number, size, pBuffer);
+        pBuffer = insert(name, age, number, pBuffer, size);
         break;
     case 2:
 
         break;
     case 3:
-
+        int *howManyToList = malloc(sizeof(int));
+        printf("Quantos você quer listar? ");
+        scanf("%d", howManyToList);
+        list(pBuffer, howManyToList);
         break;
     case 4:
 
