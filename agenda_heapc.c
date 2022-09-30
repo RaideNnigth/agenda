@@ -29,15 +29,8 @@ int *estaRodando;
 
 void insert(char* name, int* age, long* number, void ** stackHead);
 void * newNode(char* name, int* age, long* number);
-void * reset(void* head);
-void   list(void** stackHead);
+void   list(void** stackHead, int* howMany);
 int*   getLexographicallyOrder(char* str1, char* str2);
-void*  getNext(void* element);
-void*  getPrev(void* element);
-long*  getNumber(void* element);
-int*   getAge(void* element);
-char*  getName(void* element);
-int* size;
 
 void menu();
 
@@ -51,7 +44,6 @@ int main(int argc, char *argv[])
     while (*estaRodando == 0)
         menu();
     
-    free(size);
     free(estaRodando);
     return 0;
 }
@@ -134,17 +126,26 @@ void insert(char* name, int* age, long* number, void ** stackHead)
     free(curr);
     return;
 }
-void list(void** stackHead){
+void   list(void** stackHead, int* howMany){
     void **prev, **curr;
     prev = malloc(sizeof(void**));
     curr = malloc(sizeof(void**));
     *prev = NULL;
     *curr = (void*)*stackHead;
-    while (*curr != NULL) {
-        printf("Nome: %s\n", (char*)*curr);
+    int *c = malloc(sizeof(int));
+    *c = 0;
+    while (*curr != NULL && *howMany > *c) {
         *prev = *curr;
+        printf("-------------------------------\n");
+        printf("Nome: %s\n", (char*)*prev);
+        *prev += sizeof(char) * 11;
+        printf("Idade: %d\n", *(int*)*prev);
+        *prev += sizeof(int);
+        printf("Number: %ld\n", *(long*)*prev);
         *curr = *(void**)(*curr + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
+        (*c)++;
     }
+    free(c);
     free(prev);
     free(curr);
 }
@@ -174,12 +175,19 @@ void menu()
         printf("Digite o telefone: ");
         scanf("%ld", number);
         insert(name, age, number, pBuffer);
+        free(age);
+        free(name);
+        free(number);
         break;
     case 2:
 
         break;
     case 3:
-        list(pBuffer);
+        int *howMany = malloc(sizeof(int));
+        printf("Quantos quer listar? ");
+        scanf("%d", howMany);
+        list(pBuffer, howMany);
+        free(howMany);
         break;
     case 4:
 
