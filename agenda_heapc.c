@@ -27,10 +27,13 @@ void **pBuffer;
 
 int *estaRodando;
 
-void insert(char* name, int* age, long* number, void ** stackHead);
+void   insert(char* name, int* age, long* number, void** stackHead);
 void * newNode(char* name, int* age, long* number);
+void   removePerName(char* name, void** stackHead);
+void   searchName(void** stackHead,char* name); 
 void   list(void** stackHead, int* howMany);
-int*   getLexographicallyOrder(char* str1, char* str2);
+void   freeList(void** stackHead);
+int    getLexographicallyOrder(char* str1, char* str2);
 
 void menu();
 
@@ -45,11 +48,12 @@ int main(int argc, char *argv[])
         menu();
     
     free(estaRodando);
+    free(pBuffer);
     return 0;
 }
 
 void * newNode(char* name, int* age, long* number){
-    void * node = (void *)malloc(sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**) * 2);
+    void * node = (void *)calloc(1, sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**) * 2);
 
     char * pName = (char *)node;
     int * pAge = (int *)(node + sizeof(char) * 11);
@@ -65,7 +69,7 @@ void * newNode(char* name, int* age, long* number){
 	return node;
 }
 
-int* getLexographicallyOrder(char* str1, char* str2){
+int getLexographicallyOrder(char* str1, char* str2){
     while (*str1 && *str2 && *str1 == *str2) {
         str1++;
         str2++;
@@ -73,12 +77,18 @@ int* getLexographicallyOrder(char* str1, char* str2){
     int *res = malloc(sizeof(int));
     *res = (*str1 - *str2);
 
-    if (*res < 0)
-        *res = -1;
+    if (*res < 0){
+        free(res);
+        return -1;
+    }
     else if (*res > 0)
-        *res = 1;
+    {
+        free(res);
+        return 1;
+    }
 
-    return res;
+    free(res);
+    return 0;
 }
 void insert(char* name, int* age, long* number, void ** stackHead)
 {
@@ -98,7 +108,7 @@ void insert(char* name, int* age, long* number, void ** stackHead)
         free(curr);
         return;
     }
-    while (*curr != NULL && *getLexographicallyOrder(name, (char*)*curr) >= 0) {
+    while (*curr != NULL && getLexographicallyOrder(name, (char*)*curr) >= 0) {
         *prev = *curr;
         *curr = *(void**)(*curr + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
     }
@@ -126,7 +136,73 @@ void insert(char* name, int* age, long* number, void ** stackHead)
     free(curr);
     return;
 }
-void   list(void** stackHead, int* howMany){
+void searchName(void** stackHead,char* name){
+    if (*stackHead == NULL)
+        return;
+    
+    void **prev, **curr;
+    prev = malloc(sizeof(void**));
+    curr = malloc(sizeof(void**));
+    *prev = NULL;
+    *curr = (void*)*stackHead;
+
+    while (*curr != NULL && getLexographicallyOrder(name, (char*)*curr) != 0) {
+        *prev = *curr;
+        *curr = *(void**)(*curr + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
+    }
+    *prev = *curr;
+    printf("-------------------------------\n");
+    printf("Nome: %s\n", (char*)*prev);
+    *prev += sizeof(char) * 11;
+    printf("Idade: %d\n", *(int*)*prev);
+    *prev += sizeof(int);
+    printf("Number: %ld\n", *(long*)*prev);
+    free(prev);
+    free(curr);
+}
+void removePerName(char* name, void** stackHead){
+    if (*stackHead == NULL)
+        return;
+    
+    void **prev, **curr, **next;
+    prev = malloc(sizeof(void**));
+    curr = malloc(sizeof(void**));
+    next = malloc(sizeof(void**));
+    *prev = NULL;
+    *curr = (void*)*stackHead;
+
+    while (*curr != NULL && getLexographicallyOrder(name, (char*)*curr) != 0) {
+        *prev = *curr;
+        *curr = *(void**)(*curr + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
+    }
+    void ** pPrev = (void **)(*curr + sizeof(char) * 11 + sizeof(int) + sizeof(long));
+    void ** pNext = (void **)(*curr + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
+    if (*prev == NULL) {
+        *pNext = *curr;
+        void** currPrev = (void**)(*curr + sizeof(char) * 11 + sizeof(int) + sizeof(long));
+        *currPrev = *curr;
+        *stackHead = *curr;
+    }
+    else if (*curr != NULL) { 
+        void** prevNext = (void**)(*prev + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
+        void** currNext = (void**)(*curr + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
+        *prevNext = *currNext;
+        *next = *(void**)(*curr + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
+        void** nextPrev = (void**)(*curr + sizeof(char) * 11 + sizeof(int) + sizeof(long));
+        *nextPrev = *prev;
+        *prevNext = *curr;
+    }
+    else {
+        void** prevNext = (void**)(*prev + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
+        *prevNext = *curr;
+        *pPrev = *prev;
+    }
+
+    free(prev);
+    free(curr);
+    free(next);
+}
+void list(void** stackHead, int* howMany){
     void **prev, **curr;
     prev = malloc(sizeof(void**));
     curr = malloc(sizeof(void**));
@@ -137,7 +213,7 @@ void   list(void** stackHead, int* howMany){
     while (*curr != NULL && *howMany > *c) {
         *prev = *curr;
         printf("-------------------------------\n");
-        printf("Nome: %s\n", (char*)*prev);
+        printf("Nome: %s\n", (char*)*(void**)prev);
         *prev += sizeof(char) * 11;
         printf("Idade: %d\n", *(int*)*prev);
         *prev += sizeof(int);
@@ -146,6 +222,21 @@ void   list(void** stackHead, int* howMany){
         (*c)++;
     }
     free(c);
+    free(prev);
+    free(curr);
+}
+void freeList(void** stackHead){
+    void **prev, **curr;
+    prev = malloc(sizeof(void**));
+    curr = malloc(sizeof(void**));
+    *prev = NULL;
+    *curr = (void*)*stackHead;
+
+    while (*curr != NULL) {
+        *prev = *curr;
+        *curr = *(void**)(*curr + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
+        free(*prev);
+    }
     free(prev);
     free(curr);
 }
@@ -180,7 +271,11 @@ void menu()
         free(number);
         break;
     case 2:
-
+        char *nameToRemove = malloc(sizeof(char) * 11);
+        printf("Digite o nome do contato a ser apagado: ");
+        scanf(" %s", nameToRemove);
+        removePerName(nameToRemove, pBuffer);
+        free(nameToRemove);
         break;
     case 3:
         int *howMany = malloc(sizeof(int));
@@ -190,10 +285,15 @@ void menu()
         free(howMany);
         break;
     case 4:
-
+        char *nameToSearch = malloc(sizeof(char) * 11);
+        printf("Digite o nome do contato a ser exibido: ");
+        scanf(" %s", nameToSearch);
+        searchName(pBuffer, nameToSearch);
+        free(nameToSearch);
         break;
     case 5:
         *estaRodando = 1;
+        freeList(pBuffer);
         break;
     default:
         printf("-------------------------------\n");
