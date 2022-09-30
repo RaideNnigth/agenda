@@ -62,8 +62,8 @@ void * newNode(char* name, int* age, long* number){
     char * pName = (char *)node;
     int * pAge = (int *)(node + sizeof(char) * 11);
     long * pNumber =  (long *)(node + sizeof(char) * 11 + sizeof(int));
-    void ** pPrev = (void **)(node + sizeof(char) * 11 + sizeof(int) + sizeof(long));
-    void ** pNext = (void **)(node + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
+    void ** pPrev = (void *)(node + sizeof(char) * 11 + sizeof(int) + sizeof(long));
+    void ** pNext = (void *)(node + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
     
     memcpy(pName, name, strlen(name));
     *pAge = *age;
@@ -91,62 +91,74 @@ int* getLexographicallyOrder(char* str1, char* str2){
 void insert(char* name, int* age, long* number, void ** stackHead)
 {
     void *node = newNode(name, age, number);
-    void **prev, **curr;
-    prev = malloc(sizeof(void**));
-    curr = malloc(sizeof(void**));
-    *prev = NULL;
-    *curr = (void*)*stackHead;
 
-    void ** pPrev = (void **)(node + sizeof(char) * 11 + sizeof(int) + sizeof(long));
-    void ** pNext = (void **)(node + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
+ /* Maintain two pointers to the previous and current nodes: */
+    void *prev, *curr;
+    prev = NULL;
+    curr = (void*)*stackHead;
+
+    void ** pPrev = (void *)(node + sizeof(char) * 11 + sizeof(int) + sizeof(long));
+    void ** pNext = (void *)(node + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
     
+    /* Case 1: consider if the list is empty: */
     if (*stackHead == NULL) {
         *stackHead = node;
-        free(prev);
-        free(curr);
         return;
     }
-    while (*curr != NULL && *getLexographicallyOrder(name, (char*)*curr) >= 0) {
-        *prev = *curr;
-        *curr = *(void**)(*curr + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
-    }
-    if (*prev == NULL) {
-        *pNext = *curr;
-        void** currPrev = (void**)(*curr + sizeof(char) * 11 + sizeof(int) + sizeof(long));
-        *currPrev = node;
-        *stackHead = node;
-    }
-    else if (*curr != NULL) { 
-        void** prevNext = (void**)(*prev + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
-        *prevNext = node;
-        *pNext = *curr;
-        void** currPrev = (void**)(*curr + sizeof(char) * 11 + sizeof(int) + sizeof(long));
-        *currPrev = node;
-        *pPrev = prev;
-    }
-    else {
-        void** prevNext = (void**)(*prev + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
-        *prevNext = node;
-        *pPrev = *prev;
+    
+    /* Now iterate until we find the correct position in the list: */
+    while (curr != NULL && *getLexographicallyOrder(name, (char*)curr) >= 0) {
+        prev = curr;
+        curr = *(void**)(curr + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
     }
 
-    free(prev);
-    free(curr);
+    /* 
+     * Case 2: now consider if we are at the beginning of the list. We know we haven't entered the loop if 
+     * prev never got reassigned:
+     */
+    if (prev == NULL) {
+        *pNext = curr;
+        /* Next line not needed if it's a singly linked list */
+        curr = *(void**)(curr + sizeof(char) * 11 + sizeof(int) + sizeof(long));
+        curr = node; 
+        *stackHead = node;
+    }
+
+    /* Case 3: now consider if we are in between nodes in the list: */
+    else if (curr != NULL) {
+        prev = *(void**)(curr + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**)); 
+        prev = node;
+        *pNext = curr;
+        /* Next two lines not needed if it's a singly linked list */
+        curr = *(void**)(curr + sizeof(char) * 11 + sizeof(int) + sizeof(long));
+        curr = node;
+        *pPrev = prev;
+    }
+
+    /*
+     * Case 4: now consider if we are inserting at the end of the list. We know we are at the end if curr is 
+     * NULL, but we know at this point that we must be at the end, since the list is not empty, we aren't inserting 
+     * at the front, and we aren't inserting in the middle:
+     */
+    else {
+        *pPrev = prev;
+        prev = *(void**)(prev + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**)); 
+        prev = node;
+        /* Next line not needed if singly linked list */
+    }
+
+    /* Now we are done! */
     return;
 }
 void list(void** stackHead){
-    void **prev, **curr;
-    prev = malloc(sizeof(void**));
-    curr = malloc(sizeof(void**));
-    *prev = NULL;
-    *curr = (void*)*stackHead;
-    while (*curr != NULL) {
-        printf("Nome: %s\n", (char*)*curr);
-        *prev = *curr;
-        *curr = *(void**)(*curr + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
+    void *curr, *prev;
+    curr = (void*)*stackHead;
+    prev = NULL;
+    while (curr != NULL) {
+        printf("Nome: %s\n", (char*)curr);
+        prev = curr;
+        curr = *(void**)(curr + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
     }
-    free(prev);
-    free(curr);
 }
 void menu()
 {
