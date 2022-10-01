@@ -159,6 +159,7 @@ void searchName(void** stackHead,char* name){
     printf("Number: %ld\n", *(long*)*prev);
     free(prev);
     free(curr);
+    free(*curr);
 }
 void removePerName(char* name, void** stackHead){
     if (*stackHead == NULL)
@@ -176,21 +177,16 @@ void removePerName(char* name, void** stackHead){
     }
     void ** pPrev = (void **)(*curr + sizeof(char) * 11 + sizeof(int) + sizeof(long));
     void ** pNext = (void **)(*curr + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
-    if (*stackHead == *curr){
-        *stackHead = *pNext;
+    if (*prev == NULL) {
+        void** currNext = (void**)(*curr + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
+        *stackHead = *currNext;
     }
-    else if (*pNext != NULL) { 
+    else if (*curr != NULL) { 
         void** prevNext = (void**)(*prev + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
-        *prevNext = *pNext;
-        void** nextPrev = (void**)(*pNext + sizeof(char) * 11 + sizeof(int) + sizeof(long));
-        *nextPrev = *prev;
-    }
-    else if (*pPrev != NULL){
-        void** prevNext = (void**)(*prev + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
-        *prevNext = NULL;
+        void** currNext = (void**)(*curr + sizeof(char) * 11 + sizeof(int) + sizeof(long) + sizeof(void**));
+        void** nextPrev = (void**)(*currNext + sizeof(char) * 11 + sizeof(int) + sizeof(long));
     }
     free(prev);
-    free(*curr);
     free(curr);
 }
 void list(void** stackHead, int* howMany){
